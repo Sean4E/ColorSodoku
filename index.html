@@ -605,7 +605,8 @@ u<!DOCTYPE html>
             min-width: 80px;
         }
 
-        .progress-item:hover .missing-colors {
+        .progress-item:hover .missing-colors,
+        .progress-item.active .missing-colors {
             display: block;
         }
 
@@ -3247,6 +3248,14 @@ u<!DOCTYPE html>
             // Initialize audio on first user interaction
             document.addEventListener('click', initAudio, { once: true });
             document.addEventListener('touchstart', initAudio, { once: true });
+
+            // Dismiss progress helper tooltip when tapping elsewhere
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.progress-item')) {
+                    document.querySelectorAll('.progress-item.active').forEach(el => el.classList.remove('active'));
+                    clearProgressHighlights();
+                }
+            });
         }
 
         function loadData() {
@@ -3924,7 +3933,21 @@ u<!DOCTYPE html>
             
             item.onmouseenter = () => highlightArea(type, index);
             item.onmouseleave = () => clearProgressHighlights();
-            
+
+            // Touch support: tap to toggle highlight and tooltip
+            item.onclick = (e) => {
+                e.stopPropagation();
+                const wasActive = item.classList.contains('active');
+                // Clear all other active items
+                document.querySelectorAll('.progress-item.active').forEach(el => el.classList.remove('active'));
+                clearProgressHighlights();
+
+                if (!wasActive) {
+                    item.classList.add('active');
+                    highlightArea(type, index);
+                }
+            };
+
             if (missing.length > 0) {
                 const tooltip = document.createElement('div');
                 tooltip.className = 'missing-colors';
