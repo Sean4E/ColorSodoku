@@ -1,0 +1,1564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>Color Sudoku</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --cell-size: 50px;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3a 50%, #0d0d2a 100%);
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            color: #e0e0ff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 300;
+            letter-spacing: 4px;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #ff6b9d, #c44dff, #6b9dff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            font-size: 0.9rem;
+            opacity: 0.6;
+            margin-bottom: 25px;
+            letter-spacing: 2px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 25px;
+        }
+
+        .control-group {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .control-group label {
+            font-size: 0.85rem;
+            opacity: 0.8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        select, button {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #e0e0ff;
+            padding: 10px 18px;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        select:hover, button:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        button.primary {
+            background: linear-gradient(135deg, rgba(196, 77, 255, 0.3), rgba(107, 157, 255, 0.3));
+            border-color: rgba(196, 77, 255, 0.5);
+        }
+
+        button.primary:hover {
+            background: linear-gradient(135deg, rgba(196, 77, 255, 0.5), rgba(107, 157, 255, 0.5));
+        }
+
+        button.hint {
+            background: linear-gradient(135deg, rgba(255, 183, 77, 0.3), rgba(255, 107, 157, 0.3));
+            border-color: rgba(255, 183, 77, 0.5);
+        }
+
+        button.hint:hover {
+            background: linear-gradient(135deg, rgba(255, 183, 77, 0.5), rgba(255, 107, 157, 0.5));
+        }
+
+        button.icon-btn {
+            padding: 10px 14px;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 25px;
+        }
+
+        .board-wrapper {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .board {
+            display: grid;
+            background: rgba(255, 255, 255, 0.25);
+            padding: 3px;
+            border-radius: 12px;
+            touch-action: manipulation;
+        }
+        
+        /* Zone container for visual grouping */
+        .zone {
+            display: grid;
+            gap: 2px;
+            padding: 5px;
+            border-radius: 8px;
+            transition: background 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .zone.zone-light {
+            background: rgba(140, 120, 255, 0.12);
+            border-color: rgba(140, 120, 255, 0.2);
+        }
+        
+        .zone.zone-dark {
+            background: rgba(0, 0, 0, 0.2);
+            border-color: rgba(0, 0, 0, 0.3);
+        }
+
+        .cell {
+            width: var(--cell-size);
+            height: var(--cell-size);
+            background: rgba(15, 15, 35, 0.9);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .zone-light .cell {
+            background: rgba(20, 20, 45, 0.85);
+        }
+        
+        .zone-dark .cell {
+            background: rgba(10, 10, 30, 0.9);
+        }
+
+        .cell:hover:not(.fixed) {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(196, 77, 255, 0.3);
+        }
+
+        .cell .color-preview {
+            width: 70%;
+            height: 70%;
+            border-radius: 50%;
+            opacity: 0.4;
+            border: 2px dashed rgba(255, 255, 255, 0.5);
+            position: absolute;
+            pointer-events: none;
+        }
+
+        .cell.selected {
+            box-shadow: 0 0 0 3px rgba(196, 77, 255, 0.8), 0 0 30px rgba(196, 77, 255, 0.4);
+            z-index: 10;
+        }
+
+        .cell.fixed {
+            cursor: default;
+        }
+
+        .cell.fixed::after {
+            content: '';
+            position: absolute;
+            bottom: 4px;
+            right: 4px;
+            width: 6px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+        }
+
+        .cell.error {
+            animation: shake 0.4s ease;
+            box-shadow: 0 0 0 3px rgba(255, 77, 77, 0.8) !important;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .cell .color-fill {
+            width: 70%;
+            height: 70%;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .cell.placed {
+            animation: placePop 0.3s ease;
+        }
+
+        @keyframes placePop {
+            0% { transform: scale(0.8); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .cell.hint-cell {
+            animation: pulse 1s ease infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 0 3px rgba(255, 183, 77, 0.5); }
+            50% { box-shadow: 0 0 0 6px rgba(255, 183, 77, 0.3); }
+        }
+
+        /* Board grid layouts - grid of zones */
+        .board.size-4 { 
+            grid-template-columns: repeat(2, auto);
+            gap: 4px;
+        }
+        .board.size-4 .zone {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .board.size-6 { 
+            grid-template-columns: repeat(2, auto);
+            gap: 4px;
+        }
+        .board.size-6 .zone {
+            grid-template-columns: repeat(3, 1fr);
+        }
+        
+        .board.size-9 { 
+            grid-template-columns: repeat(3, auto);
+            gap: 4px;
+        }
+        .board.size-9 .zone {
+            grid-template-columns: repeat(3, 1fr);
+        }
+
+        .color-palette {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 15px 20px;
+        }
+
+        .color-option {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 3px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        .color-option:hover {
+            transform: scale(1.15);
+        }
+
+        .color-option.selected {
+            border-color: white;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+        }
+
+        .color-option .color-number {
+            position: absolute;
+            bottom: -18px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.7rem;
+            opacity: 0.5;
+        }
+
+        .color-option.eraser {
+            background: linear-gradient(135deg, #333 25%, #555 25%, #555 50%, #333 50%, #333 75%, #555 75%);
+            background-size: 10px 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .color-option.eraser::after {
+            content: '✕';
+            font-size: 1.2rem;
+            color: #ff6b6b;
+        }
+
+        .status-bar {
+            display: flex;
+            gap: 30px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .status-item {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 12px 20px;
+            text-align: center;
+        }
+
+        .status-item .label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.6;
+            margin-bottom: 5px;
+        }
+
+        .status-item .value {
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        /* Settings Panel */
+        .settings-panel {
+            position: fixed;
+            top: 0;
+            right: -400px;
+            width: 380px;
+            max-width: 90vw;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(20, 20, 50, 0.98), rgba(10, 10, 30, 0.98));
+            backdrop-filter: blur(20px);
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            z-index: 1000;
+            transition: right 0.4s ease;
+            overflow-y: auto;
+        }
+
+        .settings-panel.open {
+            right: 0;
+        }
+
+        .settings-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .settings-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .settings-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .settings-header h2 {
+            font-size: 1.5rem;
+            font-weight: 400;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .close-settings {
+            background: none;
+            border: none;
+            color: #e0e0ff;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 5px;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+
+        .close-settings:hover {
+            opacity: 1;
+            background: none;
+        }
+
+        .settings-section {
+            margin-bottom: 30px;
+        }
+
+        .settings-section h3 {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            opacity: 0.6;
+            margin-bottom: 15px;
+        }
+
+        .theme-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .theme-option {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .theme-option:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .theme-option.active {
+            border-color: rgba(196, 77, 255, 0.8);
+            background: rgba(196, 77, 255, 0.1);
+        }
+
+        .theme-option .theme-name {
+            font-size: 0.95rem;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+
+        .theme-preview {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .theme-preview .preview-dot {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .modal.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, rgba(30, 30, 60, 0.95), rgba(20, 20, 40, 0.95));
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 25px;
+            padding: 40px 50px;
+            text-align: center;
+            transform: scale(0.8);
+            transition: transform 0.3s ease;
+        }
+
+        .modal.show .modal-content {
+            transform: scale(1);
+        }
+
+        .modal h2 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #ffd700, #ff6b9d);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .modal p {
+            opacity: 0.8;
+            margin-bottom: 25px;
+        }
+
+        .confetti {
+            position: fixed;
+            pointer-events: none;
+            z-index: 1001;
+        }
+
+        /* Tablet */
+        @media (max-width: 768px) {
+            body { padding: 15px; }
+            h1 { font-size: 2rem; letter-spacing: 2px; }
+            .subtitle { font-size: 0.8rem; margin-bottom: 20px; }
+            .controls { gap: 10px; }
+            .control-group { padding: 12px 15px; }
+            .color-option { width: 42px; height: 42px; }
+            .game-container { gap: 20px; }
+            .board-wrapper { padding: 15px; }
+            .status-bar { gap: 15px; }
+            .status-item { padding: 10px 15px; }
+        }
+
+        /* Mobile */
+        @media (max-width: 600px) {
+            body { padding: 10px; }
+            h1 { font-size: 1.6rem; letter-spacing: 1px; margin-bottom: 5px; }
+            .subtitle { font-size: 0.75rem; margin-bottom: 15px; letter-spacing: 1px; }
+            
+            .controls { 
+                gap: 8px; 
+                width: 100%;
+            }
+            .control-group { 
+                padding: 10px 12px; 
+                flex: 1 1 auto;
+                min-width: 0;
+                justify-content: center;
+            }
+            .control-group label { 
+                font-size: 0.7rem; 
+                display: none;
+            }
+            select, button { 
+                padding: 10px 12px; 
+                font-size: 0.85rem;
+                min-height: 44px;
+            }
+            button.icon-btn { padding: 10px 12px; }
+            
+            .board-wrapper { 
+                padding: 10px; 
+                border-radius: 15px;
+                width: 100%;
+                max-width: calc(100vw - 20px);
+            }
+            .board { 
+                gap: 2px; 
+                padding: 2px;
+            }
+            .zone {
+                padding: 3px;
+                gap: 1px;
+                border-radius: 6px;
+            }
+            .cell { 
+                border-radius: 4px;
+            }
+            .cell .color-fill { width: 65%; height: 65%; }
+            .cell.fixed::after { width: 4px; height: 4px; bottom: 2px; right: 2px; }
+            
+            .color-palette { 
+                padding: 12px 15px; 
+                gap: 8px;
+                width: 100%;
+                max-width: calc(100vw - 20px);
+                border-radius: 12px;
+            }
+            .color-option { 
+                width: 36px; 
+                height: 36px;
+                border-width: 2px;
+            }
+            .color-option .color-number { 
+                font-size: 0.6rem; 
+                bottom: -14px;
+            }
+            
+            .status-bar { 
+                gap: 10px; 
+                width: 100%;
+                justify-content: space-around;
+            }
+            .status-item { 
+                padding: 8px 12px; 
+                border-radius: 10px;
+                flex: 1;
+                min-width: 0;
+            }
+            .status-item .label { font-size: 0.65rem; }
+            .status-item .value { font-size: 1.1rem; }
+            
+            .game-container { gap: 15px; width: 100%; }
+            
+            .settings-panel { 
+                width: 100%; 
+                right: -100%; 
+                padding: 20px;
+            }
+            .settings-header { margin-bottom: 20px; }
+            .settings-header h2 { font-size: 1.3rem; }
+            .theme-option { padding: 12px; }
+            .theme-option .theme-name { font-size: 0.9rem; }
+            .theme-preview .preview-dot { width: 20px; height: 20px; }
+            
+            .modal-content { 
+                padding: 30px 25px; 
+                margin: 15px;
+                border-radius: 20px;
+            }
+            .modal h2 { font-size: 1.6rem; }
+        }
+
+        /* Small mobile */
+        @media (max-width: 380px) {
+            h1 { font-size: 1.4rem; }
+            .color-option { width: 30px; height: 30px; }
+            .board-wrapper { padding: 8px; }
+            select, button { padding: 8px 10px; font-size: 0.8rem; }
+        }
+
+        /* Landscape mobile */
+        @media (max-height: 500px) and (orientation: landscape) {
+            body { padding: 10px; }
+            h1 { font-size: 1.4rem; margin-bottom: 5px; }
+            .subtitle { display: none; }
+            .controls { margin-bottom: 10px; }
+            .game-container { 
+                flex-direction: row; 
+                flex-wrap: wrap;
+                justify-content: center;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            .board-wrapper { padding: 10px; }
+            .color-palette { 
+                flex-direction: column; 
+                padding: 10px;
+                max-height: 50vh;
+                overflow-y: auto;
+            }
+            .color-option { width: 32px; height: 32px; }
+            .status-bar { 
+                flex-direction: column; 
+                gap: 8px;
+            }
+            .status-item { padding: 6px 10px; }
+        }
+
+        /* Touch device optimizations */
+        @media (hover: none) and (pointer: coarse) {
+            .cell:hover:not(.fixed) {
+                transform: none;
+                box-shadow: none;
+            }
+            .cell:active:not(.fixed) {
+                transform: scale(0.95);
+                box-shadow: 0 0 15px rgba(196, 77, 255, 0.4);
+            }
+            .color-option:hover {
+                transform: none;
+            }
+            .color-option:active {
+                transform: scale(0.9);
+            }
+            .cell .color-preview {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>COLOR SUDOKU</h1>
+    <p class="subtitle">Fill the grid with colors • No repeats in rows, columns, or boxes</p>
+
+    <div class="controls">
+        <div class="control-group">
+            <label>Grid</label>
+            <select id="gridSize" aria-label="Grid Size">
+                <option value="4">4 × 4</option>
+                <option value="6">6 × 6</option>
+                <option value="9" selected>9 × 9</option>
+            </select>
+        </div>
+        <div class="control-group">
+            <label>Level</label>
+            <select id="difficulty" aria-label="Difficulty">
+                <option value="easy">Easy</option>
+                <option value="medium" selected>Medium</option>
+                <option value="hard">Hard</option>
+            </select>
+        </div>
+        <button class="primary" onclick="newGame()" aria-label="New Game">New</button>
+        <button class="hint" onclick="giveHint()" aria-label="Get Hint">💡</button>
+        <button onclick="checkSolution()" aria-label="Check Solution">✓</button>
+        <button class="icon-btn" onclick="openSettings()" title="Settings" aria-label="Settings">⚙️</button>
+    </div>
+
+    <div class="game-container">
+        <div class="board-wrapper">
+            <div class="board size-9" id="board"></div>
+        </div>
+
+        <div class="color-palette" id="palette"></div>
+
+        <div class="status-bar">
+            <div class="status-item">
+                <div class="label">Time</div>
+                <div class="value" id="timer">00:00</div>
+            </div>
+            <div class="status-item">
+                <div class="label">Hints Used</div>
+                <div class="value" id="hintsUsed">0</div>
+            </div>
+            <div class="status-item">
+                <div class="label">Remaining</div>
+                <div class="value" id="remaining">0</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Panel -->
+    <div class="settings-overlay" id="settingsOverlay" onclick="closeSettings()"></div>
+    <div class="settings-panel" id="settingsPanel">
+        <div class="settings-header">
+            <h2>⚙️ Settings</h2>
+            <button class="close-settings" onclick="closeSettings()">×</button>
+        </div>
+        
+        <div class="settings-section">
+            <h3>Color Theme</h3>
+            <div class="theme-grid" id="themeGrid"></div>
+        </div>
+    </div>
+
+    <div class="modal" id="winModal">
+        <div class="modal-content">
+            <h2>🎉 Congratulations!</h2>
+            <p>You solved the puzzle!</p>
+            <p id="winStats"></p>
+            <button class="primary" onclick="closeModal(); newGame();">Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        // High-contrast color themes - carefully chosen for maximum distinguishability
+        const COLOR_THEMES = {
+            vibrant: {
+                name: 'Vibrant',
+                colors: {
+                    4: ['#FF2D55', '#00D68F', '#FFD000', '#007AFF'],
+                    6: ['#FF2D55', '#FF9500', '#FFD000', '#00D68F', '#00B4D8', '#AF52DE'],
+                    9: ['#FF2D55', '#FF6B00', '#FFD000', '#7ED321', '#00D68F', '#00B4D8', '#007AFF', '#5856D6', '#FF2D95']
+                }
+            },
+            neon: {
+                name: 'Neon Glow',
+                colors: {
+                    4: ['#FF003C', '#00FF9F', '#00FFFF', '#FF00FF'],
+                    6: ['#FF003C', '#FF6600', '#FFFF00', '#00FF66', '#00FFFF', '#FF00FF'],
+                    9: ['#FF003C', '#FF5500', '#FFCC00', '#AAFF00', '#00FF66', '#00FFCC', '#00CCFF', '#7700FF', '#FF00AA']
+                }
+            },
+            pastel: {
+                name: 'Soft Pastel',
+                colors: {
+                    4: ['#FF8A8A', '#8AE8CF', '#8AC4FF', '#FFE38A'],
+                    6: ['#FF8A8A', '#FFB38A', '#FFE38A', '#8AE8CF', '#8AC4FF', '#D38AFF'],
+                    9: ['#FF8A8A', '#FFAB8A', '#FFD08A', '#E8E88A', '#8AE8AA', '#8AE8D0', '#8AC4FF', '#A88AFF', '#FF8AD0']
+                }
+            },
+            earth: {
+                name: 'Earth Tones',
+                colors: {
+                    4: ['#D84315', '#2E7D32', '#1565C0', '#8D6E63'],
+                    6: ['#C62828', '#EF6C00', '#F9A825', '#2E7D32', '#0277BD', '#6A1B9A'],
+                    9: ['#C62828', '#D84315', '#EF6C00', '#F9A825', '#9E9D24', '#2E7D32', '#00838F', '#1565C0', '#6A1B9A']
+                }
+            },
+            ocean: {
+                name: 'Ocean Depths',
+                colors: {
+                    4: ['#FF6B6B', '#26D0CE', '#45B7D1', '#A8E6CF'],
+                    6: ['#FF6B6B', '#FF9F43', '#FECA57', '#1DD1A1', '#48DBFB', '#5F27CD'],
+                    9: ['#FF6B6B', '#FF8C5A', '#FFA94D', '#FFD93D', '#6BCB77', '#48DBFB', '#1E90FF', '#5F5FFF', '#A855F7']
+                }
+            },
+            sunset: {
+                name: 'Sunset',
+                colors: {
+                    4: ['#F72585', '#7209B7', '#3A0CA3', '#4CC9F0'],
+                    6: ['#F72585', '#B5179E', '#7209B7', '#560BAD', '#3F37C9', '#4CC9F0'],
+                    9: ['#F72585', '#E5197D', '#B5179E', '#9D4EDD', '#7209B7', '#560BAD', '#3A0CA3', '#4361EE', '#4CC9F0']
+                }
+            },
+            forest: {
+                name: 'Forest',
+                colors: {
+                    4: ['#E63946', '#F4A261', '#2A9D8F', '#264653'],
+                    6: ['#E63946', '#F4A261', '#E9C46A', '#2A9D8F', '#219EBC', '#023047'],
+                    9: ['#E63946', '#F77F00', '#F4A261', '#E9C46A', '#8AB17D', '#2A9D8F', '#219EBC', '#0077B6', '#023047']
+                }
+            },
+            candy: {
+                name: 'Candy Pop',
+                colors: {
+                    4: ['#FF1744', '#00E676', '#2979FF', '#FFEA00'],
+                    6: ['#FF1744', '#FF6D00', '#FFEA00', '#00E676', '#00B0FF', '#D500F9'],
+                    9: ['#FF1744', '#FF5722', '#FF9100', '#FFEA00', '#C6FF00', '#00E676', '#00E5FF', '#2979FF', '#D500F9']
+                }
+            },
+            highContrast: {
+                name: 'High Contrast',
+                colors: {
+                    4: ['#FFFFFF', '#FF0000', '#00FF00', '#0000FF'],
+                    6: ['#FFFFFF', '#FF0000', '#FFFF00', '#00FF00', '#00FFFF', '#0000FF'],
+                    9: ['#FFFFFF', '#FF0000', '#FF8800', '#FFFF00', '#00FF00', '#00FFFF', '#0088FF', '#0000FF', '#FF00FF']
+                }
+            },
+            colorblind: {
+                name: 'Colorblind Safe',
+                colors: {
+                    4: ['#000000', '#E69F00', '#56B4E9', '#F0E442'],
+                    6: ['#000000', '#E69F00', '#56B4E9', '#009E73', '#F0E442', '#CC79A7'],
+                    9: ['#000000', '#E69F00', '#56B4E9', '#009E73', '#F0E442', '#0072B2', '#D55E00', '#CC79A7', '#FFFFFF']
+                }
+            }
+        };
+
+        // Box dimensions for each grid size
+        const BOX_DIMS = {
+            4: { rows: 2, cols: 2 },
+            6: { rows: 2, cols: 3 },
+            9: { rows: 3, cols: 3 }
+        };
+
+        // Removal counts for difficulty
+        const REMOVAL_PERCENT = {
+            easy: 0.4,
+            medium: 0.55,
+            hard: 0.7
+        };
+
+        let gridSize = 9;
+        let currentTheme = 'vibrant';
+        let colors = COLOR_THEMES[currentTheme].colors[9];
+        let board = [];
+        let solution = [];
+        let fixed = [];
+        let selectedCell = null;
+        let selectedColor = null;
+        let timerInterval = null;
+        let seconds = 0;
+        let hintsUsed = 0;
+
+        function init() {
+            renderThemeOptions();
+            calculateCellSize();
+            newGame();
+            
+            // Recalculate on resize/orientation change
+            window.addEventListener('resize', debounce(calculateCellSize, 150));
+            window.addEventListener('orientationchange', () => {
+                setTimeout(calculateCellSize, 100);
+            });
+        }
+        
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+        
+        function calculateCellSize() {
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+            const isLandscape = viewportWidth > viewportHeight;
+            
+            let maxBoardWidth;
+            if (viewportWidth <= 380) {
+                maxBoardWidth = viewportWidth - 40;
+            } else if (viewportWidth <= 600) {
+                maxBoardWidth = viewportWidth - 50;
+            } else if (isLandscape && viewportHeight <= 500) {
+                maxBoardWidth = Math.min(viewportHeight - 100, viewportWidth * 0.5);
+            } else {
+                maxBoardWidth = Math.min(480, viewportWidth - 60);
+            }
+            
+            // Calculate cell size based on grid size
+            const gaps = gridSize - 1 + Math.floor(gridSize / 3) * 2; // account for box separators
+            const cellSize = Math.floor((maxBoardWidth - gaps * 2 - 10) / gridSize);
+            const clampedSize = Math.min(Math.max(cellSize, 28), 50);
+            
+            document.documentElement.style.setProperty('--cell-size', `${clampedSize}px`);
+        }
+
+        function renderThemeOptions() {
+            const grid = document.getElementById('themeGrid');
+            grid.innerHTML = '';
+            
+            for (const [key, theme] of Object.entries(COLOR_THEMES)) {
+                const option = document.createElement('div');
+                option.className = 'theme-option' + (key === currentTheme ? ' active' : '');
+                option.onclick = (e) => selectTheme(key, e.currentTarget);
+                
+                const preview = theme.colors[9].slice(0, 9).map(color => 
+                    `<div class="preview-dot" style="background: ${color}"></div>`
+                ).join('');
+                
+                option.innerHTML = `
+                    <div class="theme-name">${theme.name}</div>
+                    <div class="theme-preview">${preview}</div>
+                `;
+                
+                grid.appendChild(option);
+            }
+        }
+
+        function selectTheme(themeKey, element) {
+            currentTheme = themeKey;
+            colors = COLOR_THEMES[currentTheme].colors[gridSize];
+            
+            // Update active state in settings
+            document.querySelectorAll('.theme-option').forEach(el => el.classList.remove('active'));
+            element.classList.add('active');
+            
+            // Re-render board and palette with new colors
+            renderBoard();
+            renderPalette();
+        }
+
+        function openSettings() {
+            document.getElementById('settingsPanel').classList.add('open');
+            document.getElementById('settingsOverlay').classList.add('show');
+        }
+
+        function closeSettings() {
+            document.getElementById('settingsPanel').classList.remove('open');
+            document.getElementById('settingsOverlay').classList.remove('show');
+        }
+
+        function newGame() {
+            gridSize = parseInt(document.getElementById('gridSize').value);
+            colors = COLOR_THEMES[currentTheme].colors[gridSize];
+            
+            clearInterval(timerInterval);
+            seconds = 0;
+            hintsUsed = 0;
+            selectedCell = null;
+            selectedColor = null;
+            document.getElementById('hintsUsed').textContent = '0';
+            updateTimer();
+            
+            // Recalculate cell size for new grid
+            calculateCellSize();
+            
+            generatePuzzle();
+            renderBoard();
+            renderPalette();
+            updateRemaining();
+            
+            // Clear color selection in palette
+            document.querySelectorAll('.color-option.selected').forEach(el => el.classList.remove('selected'));
+            
+            timerInterval = setInterval(() => {
+                seconds++;
+                updateTimer();
+            }, 1000);
+        }
+
+        function generatePuzzle() {
+            // Generate a solved board
+            solution = Array(gridSize).fill(null).map(() => Array(gridSize).fill(0));
+            solveSudoku(solution);
+            
+            // Copy solution to board
+            board = solution.map(row => [...row]);
+            fixed = Array(gridSize).fill(null).map(() => Array(gridSize).fill(false));
+            
+            // Remove cells based on difficulty
+            const difficulty = document.getElementById('difficulty').value;
+            const totalCells = gridSize * gridSize;
+            const toRemove = Math.floor(totalCells * REMOVAL_PERCENT[difficulty]);
+            
+            let removed = 0;
+            const cells = [];
+            for (let r = 0; r < gridSize; r++) {
+                for (let c = 0; c < gridSize; c++) {
+                    cells.push([r, c]);
+                }
+            }
+            shuffleArray(cells);
+            
+            for (const [r, c] of cells) {
+                if (removed >= toRemove) break;
+                board[r][c] = 0;
+                removed++;
+            }
+            
+            // Mark fixed cells
+            for (let r = 0; r < gridSize; r++) {
+                for (let c = 0; c < gridSize; c++) {
+                    fixed[r][c] = board[r][c] !== 0;
+                }
+            }
+        }
+
+        function solveSudoku(grid) {
+            const empty = findEmpty(grid);
+            if (!empty) return true;
+            
+            const [row, col] = empty;
+            const nums = [...Array(gridSize).keys()].map(i => i + 1);
+            shuffleArray(nums);
+            
+            for (const num of nums) {
+                if (isValid(grid, row, col, num)) {
+                    grid[row][col] = num;
+                    if (solveSudoku(grid)) return true;
+                    grid[row][col] = 0;
+                }
+            }
+            return false;
+        }
+
+        function findEmpty(grid) {
+            for (let r = 0; r < gridSize; r++) {
+                for (let c = 0; c < gridSize; c++) {
+                    if (grid[r][c] === 0) return [r, c];
+                }
+            }
+            return null;
+        }
+
+        function isValid(grid, row, col, num) {
+            // Check row
+            if (grid[row].includes(num)) return false;
+            
+            // Check column
+            for (let r = 0; r < gridSize; r++) {
+                if (grid[r][col] === num) return false;
+            }
+            
+            // Check box
+            const { rows: boxRows, cols: boxCols } = BOX_DIMS[gridSize];
+            const boxRow = Math.floor(row / boxRows) * boxRows;
+            const boxCol = Math.floor(col / boxCols) * boxCols;
+            
+            for (let r = boxRow; r < boxRow + boxRows; r++) {
+                for (let c = boxCol; c < boxCol + boxCols; c++) {
+                    if (grid[r][c] === num) return false;
+                }
+            }
+            
+            return true;
+        }
+
+        function shuffleArray(arr) {
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+        }
+
+        function renderBoard() {
+            const boardEl = document.getElementById('board');
+            boardEl.className = `board size-${gridSize}`;
+            boardEl.innerHTML = '';
+            
+            const { rows: boxRows, cols: boxCols } = BOX_DIMS[gridSize];
+            const numBoxesX = gridSize / boxCols;
+            const numBoxesY = gridSize / boxRows;
+            
+            // Create zones (boxes) and populate with cells
+            for (let boxY = 0; boxY < numBoxesY; boxY++) {
+                for (let boxX = 0; boxX < numBoxesX; boxX++) {
+                    const zone = document.createElement('div');
+                    const zoneIndex = boxY * numBoxesX + boxX;
+                    const isLightZone = (boxY + boxX) % 2 === 0;
+                    zone.className = `zone ${isLightZone ? 'zone-light' : 'zone-dark'}`;
+                    
+                    // Add cells to this zone
+                    for (let cellY = 0; cellY < boxRows; cellY++) {
+                        for (let cellX = 0; cellX < boxCols; cellX++) {
+                            const r = boxY * boxRows + cellY;
+                            const c = boxX * boxCols + cellX;
+                            
+                            const cell = document.createElement('div');
+                            cell.className = 'cell' + (fixed[r][c] ? ' fixed' : '');
+                            cell.dataset.row = r;
+                            cell.dataset.col = c;
+                            
+                            if (board[r][c] !== 0) {
+                                const fill = document.createElement('div');
+                                fill.className = 'color-fill';
+                                fill.style.backgroundColor = colors[board[r][c] - 1];
+                                cell.appendChild(fill);
+                            }
+                            
+                            cell.addEventListener('click', () => selectCell(r, c));
+                            
+                            // Add hover preview events for non-fixed cells
+                            if (!fixed[r][c]) {
+                                cell.addEventListener('mouseenter', () => showPreview(r, c));
+                                cell.addEventListener('mouseleave', () => hidePreview(r, c));
+                            }
+                            
+                            zone.appendChild(cell);
+                        }
+                    }
+                    
+                    boardEl.appendChild(zone);
+                }
+            }
+        }
+        
+        function showPreview(row, col) {
+            if (selectedColor === null || selectedColor === 0) return;
+            if (board[row][col] === selectedColor) return; // Already has this color
+            
+            const cell = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
+            if (!cell || cell.classList.contains('fixed')) return;
+            
+            // Check if this would be a valid move
+            const tempBoard = board.map(r => [...r]);
+            tempBoard[row][col] = 0;
+            const isValidMove = isValid(tempBoard, row, col, selectedColor);
+            
+            // Remove existing preview if any
+            const existingPreview = cell.querySelector('.color-preview');
+            if (existingPreview) existingPreview.remove();
+            
+            // Add preview
+            const preview = document.createElement('div');
+            preview.className = 'color-preview';
+            preview.style.backgroundColor = colors[selectedColor - 1];
+            preview.style.opacity = isValidMove ? '0.5' : '0.2';
+            preview.style.borderColor = isValidMove ? 'rgba(255,255,255,0.5)' : 'rgba(255,100,100,0.5)';
+            cell.appendChild(preview);
+        }
+        
+        function hidePreview(row, col) {
+            const cell = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
+            if (!cell) return;
+            const preview = cell.querySelector('.color-preview');
+            if (preview) preview.remove();
+        }
+        
+        function updateHoverPreviews() {
+            // Clear all existing previews
+            document.querySelectorAll('.color-preview').forEach(el => el.remove());
+        }
+
+        function renderPalette() {
+            const palette = document.getElementById('palette');
+            palette.innerHTML = '';
+            
+            colors.forEach((color, idx) => {
+                const option = document.createElement('div');
+                option.className = 'color-option';
+                option.style.backgroundColor = color;
+                
+                // Add number indicator
+                const num = document.createElement('span');
+                num.className = 'color-number';
+                num.textContent = idx + 1;
+                option.appendChild(num);
+                
+                option.addEventListener('click', () => selectColor(idx + 1, option));
+                palette.appendChild(option);
+            });
+            
+            // Add eraser
+            const eraser = document.createElement('div');
+            eraser.className = 'color-option eraser';
+            const eraserNum = document.createElement('span');
+            eraserNum.className = 'color-number';
+            eraserNum.textContent = '0';
+            eraser.appendChild(eraserNum);
+            eraser.addEventListener('click', () => selectColor(0, eraser));
+            palette.appendChild(eraser);
+        }
+
+        function selectCell(row, col) {
+            if (fixed[row][col]) return;
+            
+            // Remove previous selection
+            document.querySelectorAll('.cell.selected').forEach(el => el.classList.remove('selected'));
+            document.querySelectorAll('.cell.hint-cell').forEach(el => el.classList.remove('hint-cell'));
+            
+            const cell = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
+            const currentValue = board[row][col];
+            
+            // If a color is selected, try to place/replace
+            if (selectedColor !== null) {
+                // If clicking on a cell with the same color already, just select it (for navigation)
+                if (currentValue === selectedColor) {
+                    cell.classList.add('selected');
+                    selectedCell = { row, col };
+                    return;
+                }
+                
+                // If eraser selected and cell is already empty, just select it
+                if (selectedColor === 0 && currentValue === 0) {
+                    cell.classList.add('selected');
+                    selectedCell = { row, col };
+                    return;
+                }
+                
+                // Try to place the color (this handles both empty cells and replacements)
+                placeColor(row, col, selectedColor);
+                
+                // Don't keep cell selected - allows quick painting of multiple cells
+                selectedCell = null;
+            } else {
+                // No color selected, just select the cell
+                cell.classList.add('selected');
+                selectedCell = { row, col };
+            }
+        }
+
+        function selectColor(colorIdx, element) {
+            document.querySelectorAll('.color-option.selected').forEach(el => el.classList.remove('selected'));
+            element.classList.add('selected');
+            selectedColor = colorIdx;
+            
+            // Update hover previews on all empty/non-fixed cells
+            updateHoverPreviews();
+        }
+
+        function placeColor(row, col, colorIdx) {
+            if (fixed[row][col]) return;
+            
+            const currentValue = board[row][col];
+            
+            // If trying to place the same color that's already there, do nothing
+            if (currentValue === colorIdx) return;
+            
+            // Check if valid move (clear the cell first in our check)
+            const tempBoard = board.map(r => [...r]);
+            tempBoard[row][col] = 0;
+            
+            if (colorIdx !== 0 && !isValid(tempBoard, row, col, colorIdx)) {
+                const cell = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
+                cell.classList.add('error');
+                setTimeout(() => cell.classList.remove('error'), 400);
+                return;
+            }
+            
+            board[row][col] = colorIdx;
+            renderBoard();
+            updateRemaining();
+            updateHoverPreviews();
+            
+            // Add placement animation
+            const placedCell = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
+            if (placedCell && colorIdx !== 0) {
+                placedCell.classList.add('placed');
+                setTimeout(() => placedCell.classList.remove('placed'), 300);
+            }
+            
+            // Check for win
+            if (isBoardComplete() && isBoardCorrect()) {
+                clearInterval(timerInterval);
+                setTimeout(showWinModal, 300);
+            }
+        }
+
+        function giveHint() {
+            // Find an empty cell and reveal its value
+            const emptyCells = [];
+            for (let r = 0; r < gridSize; r++) {
+                for (let c = 0; c < gridSize; c++) {
+                    if (board[r][c] === 0) {
+                        emptyCells.push([r, c]);
+                    }
+                }
+            }
+            
+            if (emptyCells.length === 0) return;
+            
+            shuffleArray(emptyCells);
+            const [row, col] = emptyCells[0];
+            
+            // Highlight the cell briefly
+            const cell = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
+            cell.classList.add('hint-cell');
+            
+            setTimeout(() => {
+                board[row][col] = solution[row][col];
+                fixed[row][col] = true;
+                hintsUsed++;
+                document.getElementById('hintsUsed').textContent = hintsUsed;
+                renderBoard();
+                updateRemaining();
+                updateHoverPreviews();
+                
+                // Check for win
+                if (isBoardComplete() && isBoardCorrect()) {
+                    clearInterval(timerInterval);
+                    setTimeout(showWinModal, 300);
+                }
+            }, 500);
+        }
+
+        function checkSolution() {
+            let hasErrors = false;
+            
+            for (let r = 0; r < gridSize; r++) {
+                for (let c = 0; c < gridSize; c++) {
+                    if (board[r][c] !== 0 && board[r][c] !== solution[r][c]) {
+                        const cell = document.querySelector(`.cell[data-row="${r}"][data-col="${c}"]`);
+                        cell.classList.add('error');
+                        setTimeout(() => cell.classList.remove('error'), 600);
+                        hasErrors = true;
+                    }
+                }
+            }
+            
+            if (!hasErrors && isBoardComplete()) {
+                clearInterval(timerInterval);
+                showWinModal();
+            }
+        }
+
+        function isBoardComplete() {
+            for (let r = 0; r < gridSize; r++) {
+                for (let c = 0; c < gridSize; c++) {
+                    if (board[r][c] === 0) return false;
+                }
+            }
+            return true;
+        }
+
+        function isBoardCorrect() {
+            for (let r = 0; r < gridSize; r++) {
+                for (let c = 0; c < gridSize; c++) {
+                    if (board[r][c] !== solution[r][c]) return false;
+                }
+            }
+            return true;
+        }
+
+        function updateRemaining() {
+            let count = 0;
+            for (let r = 0; r < gridSize; r++) {
+                for (let c = 0; c < gridSize; c++) {
+                    if (board[r][c] === 0) count++;
+                }
+            }
+            document.getElementById('remaining').textContent = count;
+        }
+
+        function updateTimer() {
+            const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
+            const secs = (seconds % 60).toString().padStart(2, '0');
+            document.getElementById('timer').textContent = `${mins}:${secs}`;
+        }
+
+        function showWinModal() {
+            createConfetti();
+            const modal = document.getElementById('winModal');
+            const stats = document.getElementById('winStats');
+            const difficulty = document.getElementById('difficulty').value;
+            stats.innerHTML = `
+                Time: ${document.getElementById('timer').textContent}<br>
+                Grid: ${gridSize}×${gridSize}<br>
+                Difficulty: ${difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}<br>
+                Hints Used: ${hintsUsed}
+            `;
+            modal.classList.add('show');
+        }
+
+        function closeModal() {
+            document.getElementById('winModal').classList.remove('show');
+        }
+
+        function createConfetti() {
+            for (let i = 0; i < 100; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.cssText = `
+                    position: fixed;
+                    width: ${Math.random() * 10 + 5}px;
+                    height: ${Math.random() * 10 + 5}px;
+                    background: ${colors[Math.floor(Math.random() * colors.length)]};
+                    left: ${Math.random() * 100}vw;
+                    top: -20px;
+                    border-radius: ${Math.random() > 0.5 ? '50%' : '0'};
+                    animation: fall ${Math.random() * 3 + 2}s linear forwards;
+                `;
+                document.body.appendChild(confetti);
+                
+                setTimeout(() => confetti.remove(), 5000);
+            }
+            
+            // Add keyframes if not exists
+            if (!document.getElementById('confetti-style')) {
+                const style = document.createElement('style');
+                style.id = 'confetti-style';
+                style.textContent = `
+                    @keyframes fall {
+                        to {
+                            transform: translateY(100vh) rotate(720deg);
+                            opacity: 0;
+                        }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+        }
+
+        // Keyboard support
+        document.addEventListener('keydown', (e) => {
+            if (document.getElementById('settingsPanel').classList.contains('open')) {
+                if (e.key === 'Escape') closeSettings();
+                return;
+            }
+            
+            const key = parseInt(e.key);
+            
+            // Number keys 1-9: set color and place if cell selected
+            if (key >= 1 && key <= gridSize) {
+                // Update the selected color in palette
+                const paletteOptions = document.querySelectorAll('.color-option:not(.eraser)');
+                document.querySelectorAll('.color-option.selected').forEach(el => el.classList.remove('selected'));
+                if (paletteOptions[key - 1]) {
+                    paletteOptions[key - 1].classList.add('selected');
+                }
+                selectedColor = key;
+                
+                // If cell is selected, place the color
+                if (selectedCell) {
+                    const { row, col } = selectedCell;
+                    if (!fixed[row][col] && board[row][col] !== key) {
+                        placeColor(row, col, key);
+                        // Re-select the cell for continued keyboard navigation
+                        const cell = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
+                        if (cell) cell.classList.add('selected');
+                        selectedCell = { row, col };
+                    }
+                }
+                updateHoverPreviews();
+                return;
+            }
+            
+            // 0/Backspace/Delete: clear cell
+            if (e.key === 'Backspace' || e.key === 'Delete' || e.key === '0') {
+                // Update palette to show eraser selected
+                document.querySelectorAll('.color-option.selected').forEach(el => el.classList.remove('selected'));
+                document.querySelector('.color-option.eraser')?.classList.add('selected');
+                selectedColor = 0;
+                
+                if (selectedCell) {
+                    const { row, col } = selectedCell;
+                    if (!fixed[row][col] && board[row][col] !== 0) {
+                        placeColor(row, col, 0);
+                        // Re-select the cell
+                        const cell = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
+                        if (cell) cell.classList.add('selected');
+                        selectedCell = { row, col };
+                    }
+                }
+                updateHoverPreviews();
+                return;
+            }
+            
+            // Arrow key navigation
+            if (!selectedCell) return;
+            
+            let newRow = selectedCell.row;
+            let newCol = selectedCell.col;
+            
+            if (e.key === 'ArrowUp' && selectedCell.row > 0) {
+                newRow = selectedCell.row - 1;
+            } else if (e.key === 'ArrowDown' && selectedCell.row < gridSize - 1) {
+                newRow = selectedCell.row + 1;
+            } else if (e.key === 'ArrowLeft' && selectedCell.col > 0) {
+                newCol = selectedCell.col - 1;
+            } else if (e.key === 'ArrowRight' && selectedCell.col < gridSize - 1) {
+                newCol = selectedCell.col + 1;
+            } else {
+                return;
+            }
+            
+            // For arrow navigation, don't auto-place - just move selection
+            document.querySelectorAll('.cell.selected').forEach(el => el.classList.remove('selected'));
+            const newCell = document.querySelector(`.cell[data-row="${newRow}"][data-col="${newCol}"]`);
+            if (newCell) {
+                newCell.classList.add('selected');
+                selectedCell = { row: newRow, col: newCol };
+            }
+        });
+
+        // Initialize game
+        init();
+    </script>
+</body>
+</html>
