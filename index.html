@@ -3596,6 +3596,7 @@
 
         // ============== INTERACTION ==============
         function selectCell(row, col) {
+            if (isPaused) return;
             if (fixed[row][col]) return;
             document.querySelectorAll('.cell.selected').forEach(el => el.classList.remove('selected'));
             
@@ -3623,6 +3624,7 @@
         }
 
         function placeColor(row, col, colorIdx) {
+            if (isPaused) return;
             if (fixed[row][col]) return;
             
             // Notes mode - toggle note instead of placing color
@@ -5238,9 +5240,9 @@
 
         function saveGameState() {
             // Convert notes (Sets) to arrays for JSON serialization
-            const notesArray = notes.map(row => 
-                row.map(cellNotes => Array.from(cellNotes))
-            );
+            const notesArray = notes && notes.length ? notes.map(row =>
+                row ? row.map(cellNotes => cellNotes ? Array.from(cellNotes) : []) : []
+            ) : [];
             
             const gameState = {
                 board: board.map(row => [...row]),
@@ -5299,9 +5301,9 @@
             currentTheme = saved.theme || currentTheme;
             
             // Restore notes (convert arrays back to Sets)
-            if (saved.notes) {
-                notes = saved.notes.map(row => 
-                    row.map(cellNotes => new Set(cellNotes))
+            if (saved.notes && saved.notes.length) {
+                notes = saved.notes.map(row =>
+                    row ? row.map(cellNotes => new Set(cellNotes || [])) : []
                 );
             } else {
                 initNotes();
