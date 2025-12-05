@@ -1,0 +1,32 @@
+{
+  "name": "Color Sudoku",
+  "short_name": "Color Sudoku",
+  "description": "A beautiful, colorful twist on the classic Sudoku puzzle game",
+  "start_url": "/ColorSodoku/",
+  "display": "standalone",
+  "background_color": "#0a0a1a",
+  "theme_color": "#0a0a1a",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Crect x='2' y='2' width='12' height='12' rx='2' fill='%23FF2D55'/%3E%3Crect x='18' y='2' width='12' height='12' rx='2' fill='%23FFD000'/%3E%3Crect x='34' y='2' width='12' height='12' rx='2' fill='%23007AFF'/%3E%3Crect x='2' y='18' width='12' height='12' rx='2' fill='%2300D68F'/%3E%3Crect x='18' y='18' width='12' height='12' rx='2' fill='%235856D6'/%3E%3Crect x='34' y='18' width='12' height='12' rx='2' fill='%23FF6B00'/%3E%3Crect x='2' y='34' width='12' height='12' rx='2' fill='%2300B4D8'/%3E%3Crect x='18' y='34' width='12' height='12' rx='2' fill='%23FF2D95'/%3E%3Crect x='34' y='34' width='12' height='12' rx='2' fill='%237ED321'/%3E%3C/svg%3E",
+      "sizes": "48x48",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' fill='%230a0a1a'/%3E%3Crect x='16' y='16' width='48' height='48' rx='8' fill='%23FF2D55'/%3E%3Crect x='72' y='16' width='48' height='48' rx='8' fill='%23FFD000'/%3E%3Crect x='128' y='16' width='48' height='48' rx='8' fill='%23007AFF'/%3E%3Crect x='16' y='72' width='48' height='48' rx='8' fill='%2300D68F'/%3E%3Crect x='72' y='72' width='48' height='48' rx='8' fill='%235856D6'/%3E%3Crect x='128' y='72' width='48' height='48' rx='8' fill='%23FF6B00'/%3E%3Crect x='16' y='128' width='48' height='48' rx='8' fill='%2300B4D8'/%3E%3Crect x='72' y='128' width='48' height='48' rx='8' fill='%23FF2D95'/%3E%3Crect x='128' y='128' width='48' height='48' rx='8' fill='%237ED321'/%3E%3C/svg%3E",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='%230a0a1a'/%3E%3Crect x='40' y='40' width='128' height='128' rx='16' fill='%23FF2D55'/%3E%3Crect x='192' y='40' width='128' height='128' rx='16' fill='%23FFD000'/%3E%3Crect x='344' y='40' width='128' height='128' rx='16' fill='%23007AFF'/%3E%3Crect x='40' y='192' width='128' height='128' rx='16' fill='%2300D68F'/%3E%3Crect x='192' y='192' width='128' height='128' rx='16' fill='%235856D6'/%3E%3Crect x='344' y='192' width='128' height='128' rx='16' fill='%23FF6B00'/%3E%3Crect x='40' y='344' width='128' height='128' rx='16' fill='%2300B4D8'/%3E%3Crect x='192' y='344' width='128' height='128' rx='16' fill='%23FF2D95'/%3E%3Crect x='344' y='344' width='128' height='128' rx='16' fill='%237ED321'/%3E%3C/svg%3E",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["games", "puzzle"],
+  "lang": "en"
+}
